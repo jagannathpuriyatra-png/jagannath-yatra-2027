@@ -397,7 +397,8 @@ export function PassPage() {
 
   // Build the list of passes to render: main yatri + each co-traveller
   const buildPasses = (y: Yatri): PassData[] => {
-    const verified = (y.verificationStatus || "").toLowerCase() === "verified";
+const verified = ["verified", "partially paid", "fully paid"]
+  .includes((y.paymentStatus || "").toLowerCase());
     const baseId = y._id || "TEMP";
     // Short display ID (last 6 chars of Mongo _id, uppercased) — easy to read aloud / type
     const short = shortId(baseId);
@@ -591,8 +592,8 @@ export function PassPage() {
         {yatris.length > 0 && (
           <div className="space-y-10 sm:space-y-12">
             {yatris.map((y) => {
-              const passes = buildPasses(y);
-              const verified = (y.verificationStatus || "").toLowerCase() === "verified";
+            const verified = ["verified", "partially paid", "fully paid"]
+               .includes((y.paymentStatus || "").toLowerCase());
               return (
                 <div key={y._id} className="space-y-6">
                   {/* Yatri header strip */}
