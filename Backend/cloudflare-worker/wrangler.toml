@@ -1,0 +1,32 @@
+# ============================================================================
+# wrangler.toml — Cloudflare Worker configuration
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+# ============================================================================
+
+name = "jagannath-backend"
+main = "worker.js"
+
+# IMPORTANT: compatibility_date must be 2026-08-04 or later for MongoDB driver
+# to work without extra flags. If you use an earlier date, add "nodejs_compat"
+# to compatibility_flags below.
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Public vars (safe to commit to git)
+[vars]
+MONGO_DATABASE = "jagannath"
+CORS_ORIGIN = "*"
+
+# ⚠️ MONGODB_URI is a SECRET — never put it in this file.
+# Set it via:
+#   wrangler secret put MONGODB_URI
+# Then paste your MongoDB Atlas connection string when prompted.
+# Format: mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+
+# ---------------------------------------------------------------------------
+# Local development
+# ---------------------------------------------------------------------------
+# Create a file named `.dev.vars` in this folder (gitignored) with:
+#   MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+# Then run:  wrangler dev
+# ---------------------------------------------------------------------------

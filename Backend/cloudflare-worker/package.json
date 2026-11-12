@@ -1,0 +1,19 @@
+{
+  "name": "jagannath-backend-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker backend for Jagannath Yatra — MongoDB native driver",
+  "main": "worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "secret": "wrangler secret put"
+  },
+  "dependencies": {
+    "mongodb": "^6.10.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
