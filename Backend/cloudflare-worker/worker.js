@@ -198,6 +198,20 @@ async function updateRegistration(id, request, env) {
     }
   }
 
+  // BUG FIX (server-side safety): keep verificationStatus in sync with paymentStatus.
+  // The admin UI sets paymentStatus to "Verified"/"Partially Paid"/"Fully Paid" when
+  // a token/payment is received. The /pass page unlocks only when verificationStatus
+  // === "verified". To guarantee the two fields never drift apart again — regardless
+  // of which client calls this PUT (admin UI, direct API call, future code) — we
+  // derive verificationStatus from paymentStatus here, with paymentStatus as the
+  // single source of truth.
+  const VERIFIED_PAYMENT_STATES = ["Verified", "Partially Paid", "Fully Paid"];
+  if (body.paymentStatus !== undefined) {
+    body.verificationStatus = VERIFIED_PAYMENT_STATES.includes(body.paymentStatus)
+      ? "verified"
+      : "Pending";
+  }
+
   // Build update document
   const updateDoc = {};
   if (Object.keys(body).length > 0) updateDoc.$set = body;
