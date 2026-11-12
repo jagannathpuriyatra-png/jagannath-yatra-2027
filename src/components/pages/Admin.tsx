@@ -6,7 +6,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReg, setSelectedReg] = useState<any>(null);
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -53,7 +53,16 @@ function AdminPage() {
   // Ye function backend ko update karega aur history bhi save karega
   const handleVerifyPayment = async (id: string, newStatus: string, newTotalPaid?: number, newPaymentEntry?: any) => {
     try {
-      const body: any = { paymentStatus: newStatus };
+      // BUG FIX: Pehle sirf paymentStatus update hota tha, isliye verificationStatus
+      // hamesha "Pending" reh jaata tha aur /pass page par pass hamesha locked reh
+      // jaata tha (PassPage verificationStatus === "verified" check karta hai).
+      // Ab jab payment Verified/Partially Paid/Fully Paid hota hai, tab
+      // verificationStatus bhi "verified" set karte hain — pass turant unlock ho jaaye.
+      const VERIFIED_PAYMENT_STATES = ["Verified", "Partially Paid", "Fully Paid"];
+      const body: any = {
+        paymentStatus: newStatus,
+        verificationStatus: VERIFIED_PAYMENT_STATES.includes(newStatus) ? "verified" : "Pending",
+      };
       if (newTotalPaid !== undefined) body.totalPaid = newTotalPaid;
       if (newPaymentEntry) body.newPaymentEntry = newPaymentEntry;
 
@@ -105,8 +114,8 @@ function AdminPage() {
   const pendingCount = registrations.length - verifiedRegs.length;
   const totalCollection = verifiedRegs.reduce((sum, reg) => sum + (reg.totalPaid || 2500), 0);
 
-  const filteredRegs = registrations.filter(reg => 
-    reg.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredRegs = registrations.filter(reg =>
+    reg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     reg.mobile.includes(searchQuery)
   );
 
@@ -137,7 +146,7 @@ function AdminPage() {
     const totalAmount = selectedReg.count * 12500;
     const totalPaid = selectedReg.totalPaid || 0;
     const remainingAmount = totalAmount - totalPaid;
-    
+
     // Robust logic: Ek baar verify hoke wapas verify nahi bolega
     const isTokenVerified = totalPaid >= 2500 || selectedReg.paymentStatus === "Verified" || selectedReg.paymentStatus === "Partially Paid" || selectedReg.paymentStatus === "Fully Paid";
     const isFullyPaid = selectedReg.paymentStatus === "Fully Paid" || remainingAmount <= 0;
@@ -156,7 +165,7 @@ function AdminPage() {
 
           {/* Layout Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* LEFT COLUMN */}
             <div className="lg:col-span-2 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -198,7 +207,7 @@ function AdminPage() {
 
             {/* RIGHT COLUMN (Accounting & Actions) */}
             <div className="space-y-6">
-              
+
               <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                 <h3 className="font-bold text-blue-900 text-sm flex items-center gap-1 mb-2">
                   <span className="material-symbols-outlined text-sm">history</span> Payment Tracking
@@ -209,7 +218,7 @@ function AdminPage() {
 
               <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4">
                 <h2 className="text-lg font-bold text-primary border-b pb-2">Accounting</h2>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between bg-green-50 p-2 rounded">
                     <span>Total Amount:</span>
@@ -227,8 +236,8 @@ function AdminPage() {
 
                 <div className="flex flex-col gap-3 pt-2">
                   {!isTokenVerified ? (
-                    <button 
-                      onClick={() => handleVerifyPayment(selectedReg._id, "Verified", 2500)} 
+                    <button
+                      onClick={() => handleVerifyPayment(selectedReg._id, "Verified", 2500)}
                       className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-sm">check_circle</span> Verify Token (₹2,500)
@@ -244,7 +253,7 @@ function AdminPage() {
                       <h3 className="font-bold text-yellow-800 text-xs">Add Manual Payment</h3>
                       <input type="number" id="partialAmount" placeholder="Amount (₹)" className="w-full p-2 border rounded text-sm outline-none" />
                       <input type="text" id="partialDate" placeholder="Date (e.g., 15 Nov)" className="w-full p-2 border rounded text-sm outline-none" />
-                      <button 
+                      <button
                         onClick={() => {
                           const amtInput = document.getElementById('partialAmount') as HTMLInputElement;
                           const dtInput = document.getElementById('partialDate') as HTMLInputElement;
@@ -261,12 +270,12 @@ function AdminPage() {
                   )}
 
                   {isTokenVerified && !isFullyPaid && (
-                    <button 
+                    <button
                       onClick={() => {
                         if(window.confirm(`Confirm: Full Remaining ₹${remainingAmount.toLocaleString()} received?`)) {
                           handleVerifyPayment(selectedReg._id, "Fully Paid", totalAmount);
                         }
-                      }} 
+                      }}
                       className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2"
                     >
                       Mark Full Paid
