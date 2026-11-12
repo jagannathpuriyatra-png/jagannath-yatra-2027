@@ -91,6 +91,27 @@ interface PassData {
 }
 
 // --------------------------------------------------------------------------
+// isPassVerified — decides whether a pass should be unlocked.
+//
+// A registration is considered verified (pass unlocked) when EITHER:
+//   - verificationStatus === "verified" (case-insensitive), OR
+//   - paymentStatus is one of the admin's "verified" payment states
+//     (Verified / Partially Paid / Fully Paid).
+//
+// BUG FIX: Earlier this page checked ONLY verificationStatus, but the admin
+// panel historically set only paymentStatus (not verificationStatus) when
+// verifying a token/payment — so passes stayed locked forever even after the
+// admin clicked "Verify". This now mirrors the admin dashboard's own verified
+// definition (see Admin.tsx verifiedRegs / isTokenVerified), so the two pages
+// can never disagree again.
+// --------------------------------------------------------------------------
+const VERIFIED_PAYMENT_STATES = ["Verified", "Partially Paid", "Fully Paid"];
+function isPassVerified(y: Yatri): boolean {
+  if ((y.verificationStatus || "").toLowerCase() === "verified") return true;
+  return VERIFIED_PAYMENT_STATES.includes(y.paymentStatus || "");
+}
+
+// --------------------------------------------------------------------------
 // AutoFitText — shrinks font size until text fits inside its container.
 // Guarantees NO clipping of Devanagari matras/ascenders/descenders.
 // --------------------------------------------------------------------------
@@ -397,7 +418,7 @@ export function PassPage() {
 
   // Build the list of passes to render: main yatri + each co-traveller
   const buildPasses = (y: Yatri): PassData[] => {
-    const verified = (y.verificationStatus || "").toLowerCase() === "verified";
+    const verified = isPassVerified(y);
     const baseId = y._id || "TEMP";
     // Short display ID (last 6 chars of Mongo _id, uppercased) — easy to read aloud / type
     const short = shortId(baseId);
@@ -592,7 +613,7 @@ export function PassPage() {
           <div className="space-y-10 sm:space-y-12">
             {yatris.map((y) => {
               const passes = buildPasses(y);
-              const verified = (y.verificationStatus || "").toLowerCase() === "verified";
+              const verified = isPassVerified(y);
               return (
                 <div key={y._id} className="space-y-6">
                   {/* Yatri header strip */}
